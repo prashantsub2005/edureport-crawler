@@ -65,8 +65,10 @@ CATEGORY: {category}
 
 Write 350-450 words. Use <p> and <h2> tags. Do not fabricate quotes.
 
-Return ONLY valid JSON, nothing else:
-{{"title":"headline under 90 chars","deck":"one sentence under 160 chars","body":"<p>...</p><h2>...</h2><p>...</p>","meta_title":"under 60 chars","meta_description":"under 160 chars","tags":["tag1","tag2","tag3"]}}"""
+You MUST respond with ONLY a valid JSON object. No explanation, no markdown, no preamble.
+
+Required JSON format:
+{{"title":"headline under 90 chars","deck":"one sentence under 160 chars","body":"<p>paragraph</p><h2>subheading</h2><p>paragraph</p>","meta_title":"under 60 chars","meta_description":"under 160 chars","tags":["tag1","tag2","tag3"]}}"""
 
     for attempt in range(3):
         try:
@@ -79,6 +81,7 @@ Return ONLY valid JSON, nothing else:
                 "https://api.groq.com/openai/v1/chat/completions",
                 headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
                 json={"model": "openai/gpt-oss-20b", "max_tokens": 2000, "temperature": 0.7,
+                      "response_format": {"type": "json_object"},
                       "messages": [{"role": "user", "content": prompt}]},
                 timeout=60,
             )
