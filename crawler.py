@@ -55,20 +55,19 @@ def story_exists(title):
         return False
 
 def rewrite_with_groq(title, description, category):
-    prompt = f"""You are a journalist at EduReport.in, India's education news platform.
-
-Rewrite this story as a publication-ready article.
+    prompt = f"""Rewrite this education news story for EduReport.in (Indian education news site).
 
 HEADLINE: {title}
 DESCRIPTION: {description}
 CATEGORY: {category}
 
-Write 350-450 words. Use <p> and <h2> tags. Do not fabricate quotes.
+Instructions:
+- Write 350-400 words of original journalism
+- Use <p> and <h2> HTML tags in the body
+- Do not invent quotes
 
-You MUST respond with ONLY a valid JSON object. No explanation, no markdown, no preamble.
-
-Required JSON format:
-{{"title":"headline under 90 chars","deck":"one sentence under 160 chars","body":"<p>paragraph</p><h2>subheading</h2><p>paragraph</p>","meta_title":"under 60 chars","meta_description":"under 160 chars","tags":["tag1","tag2","tag3"]}}"""
+Respond with ONLY this JSON (no markdown, no backticks, start directly with {{):
+{{"title":"SEO headline","deck":"one line summary","body":"<p>...</p><h2>...</h2><p>...</p>","meta_title":"short title","meta_description":"short description","tags":["tag1","tag2","tag3"]}}"""
 
     for attempt in range(3):
         try:
@@ -80,8 +79,7 @@ Required JSON format:
             r = requests.post(
                 "https://api.groq.com/openai/v1/chat/completions",
                 headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
-                json={"model": "openai/gpt-oss-20b", "max_tokens": 2000, "temperature": 0.7,
-                      "response_format": {"type": "json_object"},
+                json={"model": "openai/gpt-oss-20b", "max_tokens": 2000, "temperature": 0.3,
                       "messages": [{"role": "user", "content": prompt}]},
                 timeout=60,
             )
