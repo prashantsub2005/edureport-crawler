@@ -9,19 +9,9 @@ ALERT_EMAIL   = os.environ['ALERT_EMAIL']
 FROM_EMAIL    = os.environ.get('FROM_EMAIL', 'editor@edureport.in')
 GNEWS_KEY     = os.environ.get('GNEWS_KEY', '')
 
-# ── ONE broad query per run — saves GNews quota (100/day = ~3/run at 30min intervals) ──
-# Rotate categories based on current hour so each gets coverage across the day
-HOUR = datetime.now(timezone.utc).hour
-QUERIES = [
-    ("education india school university exam",  "Higher Education"),
-    ("NEET JEE CUET board exam result india",   "Exams & Results"),
-    ("education policy UGC NEP AICTE india",    "Policy & Regulatory"),
-    ("edtech school college india",             "EdTech"),
-    ("CBSE NCERT school student india",         "K-12"),
-    ("university ranking NIRF india",           "Rankings & Awards"),
-]
-# Pick 1 query based on hour — cycles through all 6 over 3 hours
-query_text, default_category = QUERIES[HOUR % len(QUERIES)]
+# ── Always use broad education query — catches all categories ──
+query_text = "education india"
+default_category = "Higher Education" 
 
 SUPABASE_HEADERS = {
     "apikey": SUPABASE_KEY,
