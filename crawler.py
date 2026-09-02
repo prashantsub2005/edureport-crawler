@@ -42,15 +42,41 @@ def fetch_gnews(query, max_results=10):
         print(f"  GNews fetch error: {e}")
         return []
 
-def story_exists(title):
+def story_exists(title, source_url=''):
     try:
-        short = title[:50].replace("'", "''")
+        # Check by source URL first — most reliable
+        if source_url:
+            r = requests.get(
+                f"{SUPABASE_URL}/rest/v1/articles",
+                headers={**SUPABASE_HEADERS, "Prefer": ""},
+                params={"select": "id", "source_url": f"eq.{source_url}", "limit": "1"},
+            )
+            if r.ok and len(r.json()) > 0:
+                return True
+
+        # Check by title word similarity
+        short = title[:40].replace("'", "''").replace("%", "")
         r = requests.get(
             f"{SUPABASE_URL}/rest/v1/articles",
             headers={**SUPABASE_HEADERS, "Prefer": ""},
-            params={"select": "id", "title": f"ilike.*{short}*", "limit": "1"},
+            params={"select": "id,title", "title": f"ilike.*{short}*", "limit": "5"},
         )
-        return r.ok and len(r.json()) > 0
+        if not r.ok:
+            return False
+        existing = r.json()
+        if not existing:
+            return False
+
+        # Skip if 5+ meaningful words match
+        stopwords = {'a','an','the','and','or','of','in','to','for','is','are',
+                     'with','on','at','by','from','as','it','its','was','has','have',
+                     'india','indian','says','said','new','will','how','why','what'}
+        new_words = set(title.lower().split()) - stopwords
+        for item in existing:
+            old_words = set(item['title'].lower().split()) - stopwords
+            if len(new_words & old_words) >= 4:
+                return True
+        return False
     except:
         return False
 
@@ -179,7 +205,7 @@ def main():
             continue
         seen.add(title)
 
-        if story_exists(title):
+        if story_exists(title, art.get('url', '')):
             print(f"↷ Exists: {title[:65]}")
             continue
 
